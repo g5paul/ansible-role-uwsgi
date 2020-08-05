@@ -1,0 +1,21 @@
+[uwsgi]
+{% if venv == 'true' %}
+# set PYTHONHOME/virtualenv (full path)
+virtualenv  = {{ virtual_env }}
+{% endif %}
+pidfile      =  /run/uwsgi-emperor.pid
+emperor      =  %d/vassals/*.ini
+master       =  true
+log-reopen   =  true
+touch-reload =  %p
+flock        =  %p
+chdir        =  %d
+max-fd       =  16384
+# NOTE: chown -R www-data:www-data <uwsgi_dir> if permission issues with uid/gid
+uid = www-data 
+gid = www-data 
+
+# runtime dir for unix sockets if needed
+exec-as-root = install -d /run/uwsgi -g www-data -m770
+
+

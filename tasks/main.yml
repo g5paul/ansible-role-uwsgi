@@ -1,0 +1,74 @@
+---
+# tasks file for ansible-role-uwsgi
+
+#- name: Install uwsgi
+#  apt:
+#    name: uwsgi
+#  tags:
+#    - uwsgi_install
+    
+#- name: Install uwsgi-python
+#  apt:
+#    name: uwsgi-plugin-python
+
+#  tags:
+#    - uwsgi_install_python_plugin
+
+- name: Install uWSGI in venv - pip
+  pip:
+    name: uwsgi
+    virtualenv: "{{ virtual_env }}"
+    virtualenv_python: "{{ virtual_env_python }}"
+    state: present
+  when: (venv is defined and venv == 'true')
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Install uWSGI - pip
+  pip:
+    name: uwsgi
+    state: present
+  when: (venv is defined and venv == 'false')
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Create uwsgi log directory
+  file:
+    path: /var/log/uwsgi
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0775
+
+- name: Making sure uwsgi config directories are there
+  file: path=/etc/{{ item }} state=directory mode=0755
+  with_items:
+    - uwsgi
+    - uwsgi/vassals
+
+- name: Making sure there's uwsgi emperor configuration
+  template: src=emperor.ini.j2 dest=/etc/uwsgi/emperor.ini mode=0644 owner=root group=root
+#  notify: restart the uwsgi emperor
+
+- name: Install uwsgi configuration
+  template: src=uwsgi.ini.j2 dest=/etc/uwsgi/vassals/sentryai.ini mode=0644 owner=root group=root
+
+- name: Copy uwsgi.service template
+  template:
+    src: uwsgi.service.j2
+    dest: /etc/systemd/system/uwsgi.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- service:
+    name: uwsgi
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+- name: Create uwsgi logrotate
+  copy:
+    src: etc_logrotate.d_uwsgi
+    dest: /etc/logrotate.d/uwsgi
+    owner: root
+    group: root
+    mode: 0644

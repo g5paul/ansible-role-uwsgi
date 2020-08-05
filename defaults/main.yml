@@ -1,0 +1,8 @@
+---
+# defaults file for ansible-role-uwsgi
+venv: 'true'
+deploy_environ: 'dev'
+virtual_env: '/opt/venv'
+virtual_env_python: 'python2'
+wsgi_file: '/etc/uwsgi/wsgi.py'
+uwsgi_procname_prefix: 'uwsgi '

@@ -1,0 +1,29 @@
+[Unit]
+Description=uWSGI Emperor
+After=syslog.target
+Before=nginx.service
+
+[Service]
+UMask=0000
+LimitNOFILE=8192
+ExecStartPre=-/bin/mkdir -p /var/run/uwsgi
+ExecStartPre=/bin/chown -R www-data:www-data /var/run/uwsgi/
+ExecStartPre=-/bin/mkdir -p /var/log/uwsgi
+ExecStartPre=/bin/chown -R www-data:www-data /var/log/uwsgi
+ExecStartPre=/bin/chmod 0775 /var/log/uwsgi
+
+{% if venv == 'true' %}
+ExecStart={{ virtual_env }}/bin/uwsgi --ini /etc/uwsgi/emperor.ini
+{% else %}
+ExecStart=/usr/local/bin/uwsgi --ini /etc/uwsgi/emperor.ini
+{% endif %}
+#ExecReload=/bin/kill -HUP $MAINPID
+#ExecStop=/bin/kill -INT $MAINPID
+Restart=always
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+KillSignal=SIGQUIT
+
+[Install]
+WantedBy=multi-user.target
